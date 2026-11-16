@@ -1,0 +1,6 @@
+sudo apt update
+sudo apt install mysql-server default-libmysqlclient-dev build-essential pkg-config
+sudo systemctl enable --now mysql
+sudo systemctl status mysql --no-pager
+mysql --version
+

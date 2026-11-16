@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% block title %}{{ mode }} request | VUA ServiceDesk{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Service Request Management</p>
+  <h1>{{ mode }} service request</h1>
+  <p>Fill out the details below to {% if mode == 'Create' %}submit a new maintenance request{% else %}update your pending request{% endif %}.</p>
+</section>
+
+<div class="status-panel" style="max-width: 48rem;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="message error">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    <div style="margin-top: 1.5rem;">
+      <button type="submit" class="button">Save request</button>
+      <a class="button" style="background: var(--muted); margin-left: 0.5rem;" href="{% if item %}{% url 'requests:detail' item.id %}{% else %}{% url 'requests:list' %}{% endif %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

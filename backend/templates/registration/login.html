@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+{% block title %}Sign in | VUA ServiceDesk{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">Authentication</p>
+  <h1>Sign in to your account</h1>
+  <p>Access your submitted service requests or manage maintenance workflows.</p>
+</section>
+
+{% if form.errors %}
+  <p class="message error">Invalid username or password. Please try again.</p>
+{% endif %}
+
+<div class="status-panel" style="max-width: 40rem;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.label_tag }}
+        {{ field }}
+        {% for error in field.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit" class="button">Sign in</button>
+  </form>
+</div>
+{% endblock %}

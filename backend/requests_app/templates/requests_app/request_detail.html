@@ -1,0 +1,134 @@
+{% extends "core/base.html" %}
+{% block title %}{{ item.title }} | VUA ServiceDesk{% endblock %}
+{% block content %}
+<p style="margin-top: 1rem;"><a href="{% url 'requests:list' %}">← All requests</a></p>
+
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Request Details</p>
+    <h1>{{ item.title }}</h1>
+  </div>
+  <div>
+    {% if item.status == 'open' or user.is_staff %}
+      <a class="button" href="{% url 'requests:update' item.id %}">Edit request</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="status-panel">
+  <dl class="request-meta">
+    <dt>Status</dt>
+    <dd><span class="status-badge status-{{ item.status }}"><strong>{{ item.get_status_display }}</strong></span></dd>
+    <dt>Priority</dt>
+    <dd>{{ item.get_priority_display }} (Level {{ item.priority }})</dd>
+    <dt>Category</dt>
+    <dd>{{ item.category.name }}</dd>
+    <dt>Location</dt>
+    <dd>{{ item.location }}</dd>
+    <dt>Requester</dt>
+    <dd>{{ item.requester.username }}</dd>
+    <dt>Created</dt>
+    <dd>{{ item.created_at|date:"d M Y H:i" }}</dd>
+    {% if item.due_at %}
+      <dt>Due Date</dt>
+      <dd>{{ item.due_at|date:"d M Y H:i" }}</dd>
+    {% endif %}
+    {% if item.resolved_at %}
+      <dt>Resolved At</dt>
+      <dd>{{ item.resolved_at|date:"d M Y H:i" }}</dd>
+      <dt>Resolution</dt>
+      <dd>{{ item.resolution_summary|linebreaksbr }}</dd>
+    {% endif %}
+  </dl>
+</section>
+
+<section>
+  <h2>Issue Description</h2>
+  <div class="status-panel">
+    <p>{{ item.description|linebreaksbr }}</p>
+  </div>
+</section>
+
+{% if item.work_order %}
+<section>
+  <h2>Assigned Work Order</h2>
+  <div class="status-panel">
+    <dl class="request-meta">
+      <dt>Technician</dt>
+      <dd>{{ item.work_order.technician.username }}</dd>
+      <dt>Started</dt>
+      <dd>{{ item.work_order.started_at|default:"Not started" }}</dd>
+      <dt>Completed</dt>
+      <dd>{{ item.work_order.completed_at|default:"In progress" }}</dd>
+      {% if item.work_order.work_notes %}
+        <dt>Work Notes</dt>
+        <dd>{{ item.work_order.work_notes|linebreaksbr }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+</section>
+{% endif %}
+
+{% if can_assign and item.status != 'resolved' and item.status != 'closed' %}
+<section>
+  <h2>Staff Assignment</h2>
+  <div class="status-panel" style="max-width: 36rem;">
+    <form method="post" action="{% url 'requests:assign' item.id %}">
+      {% csrf_token %}
+      <div class="form-row">
+        {{ assignment_form.technician.label_tag }}
+        {{ assignment_form.technician }}
+      </div>
+      <button type="submit" class="button">Assign Technician</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+{% if can_resolve and item.status != 'resolved' and item.status != 'closed' %}
+<section>
+  <h2>Complete & Resolve Request</h2>
+  <div class="status-panel" style="max-width: 48rem;">
+    <form method="post" action="{% url 'requests:resolve' item.id %}">
+      {% csrf_token %}
+      <div class="form-row">
+        {{ resolution_form.work_notes.label_tag }}
+        {{ resolution_form.work_notes }}
+        <small>{{ resolution_form.work_notes.help_text }}</small>
+      </div>
+      <div class="form-row">
+        {{ resolution_form.resolution_summary.label_tag }}
+        {{ resolution_form.resolution_summary }}
+        <small>{{ resolution_form.resolution_summary.help_text }}</small>
+      </div>
+      <button type="submit" class="button" style="background: var(--success-text);">Mark as Resolved</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<section>
+  <h2>Discussion & Comments ({{ comments.count }})</h2>
+  {% for comment in comments %}
+    <article class="comment">
+      <strong>{{ comment.author.username }}</strong>
+      {% if comment.author.is_staff %}<span style="color: var(--brand); font-size: 0.8rem; font-weight: bold;">(Staff)</span>{% endif %}
+      <time>{{ comment.created_at|date:"d M Y H:i" }}</time>
+      <p>{{ comment.body|linebreaksbr }}</p>
+    </article>
+  {% empty %}
+    <p>No comments yet on this request.</p>
+  {% endfor %}
+
+  <div class="status-panel" style="max-width: 42rem; margin-top: 1.5rem;">
+    <h3>Add a comment</h3>
+    <form method="post" action="{% url 'requests:comment-add' item.id %}">
+      {% csrf_token %}
+      <div class="form-row">
+        {{ comment_form.body }}
+      </div>
+      <button type="submit" class="button">Post comment</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
